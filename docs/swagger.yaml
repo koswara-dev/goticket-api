@@ -1,0 +1,1120 @@
+basePath: /api/v1
+definitions:
+  dto.BookingDetailRequest:
+    properties:
+      quantity:
+        type: integer
+      ticket_category_id:
+        type: integer
+    required:
+    - quantity
+    - ticket_category_id
+    type: object
+  dto.BookingRequest:
+    properties:
+      booking_date:
+        type: string
+      booking_details:
+        items:
+          $ref: '#/definitions/dto.BookingDetailRequest'
+        type: array
+      customer_id:
+        type: integer
+    required:
+    - booking_details
+    - customer_id
+    type: object
+  dto.ConcertResponse:
+    properties:
+      created_at:
+        type: string
+      date:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      poster_url:
+        type: string
+      rules_pdf_url:
+        type: string
+      status:
+        type: string
+      thumbnail_url:
+        type: string
+      title:
+        type: string
+      updated_at:
+        type: string
+      venue:
+        type: string
+    type: object
+  dto.CustomerCreateRequest:
+    properties:
+      email:
+        type: string
+      name:
+        type: string
+      nik:
+        type: string
+    required:
+    - email
+    - name
+    - nik
+    type: object
+  dto.CustomerResponse:
+    properties:
+      created_at:
+        type: string
+      email:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      nik:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  dto.CustomerUpdateRequest:
+    properties:
+      email:
+        type: string
+      name:
+        type: string
+    type: object
+  dto.ForgotPasswordRequest:
+    properties:
+      email:
+        type: string
+    required:
+    - email
+    type: object
+  dto.LoginRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  dto.LoginResponse:
+    properties:
+      email:
+        type: string
+      name:
+        type: string
+      token:
+        type: string
+    required:
+    - email
+    - name
+    - token
+    type: object
+  dto.PaginationMeta:
+    properties:
+      page:
+        type: integer
+      size:
+        type: integer
+      total_data:
+        type: integer
+      total_pages:
+        type: integer
+    type: object
+  dto.RegisterRequest:
+    properties:
+      email:
+        type: string
+      name:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - name
+    - password
+    type: object
+  dto.ResendOTPRequest:
+    properties:
+      email:
+        type: string
+      type:
+        enum:
+        - register
+        - forgot_password
+        type: string
+    required:
+    - email
+    - type
+    type: object
+  dto.ResetPasswordRequest:
+    properties:
+      code:
+        type: string
+      email:
+        type: string
+      new_password:
+        minLength: 6
+        type: string
+    required:
+    - code
+    - email
+    - new_password
+    type: object
+  dto.VerifyOTPRequest:
+    properties:
+      code:
+        type: string
+      email:
+        type: string
+      type:
+        enum:
+        - register
+        - forgot_password
+        type: string
+    required:
+    - code
+    - email
+    - type
+    type: object
+  dto.WebResponse:
+    properties:
+      data: {}
+      message:
+        type: string
+      meta: {}
+      success:
+        type: boolean
+    type: object
+  model.Booking:
+    properties:
+      booking_code:
+        type: string
+      booking_date:
+        type: string
+      created_at:
+        type: string
+      customer:
+        $ref: '#/definitions/model.Customer'
+      customer_id:
+        type: integer
+      details:
+        items:
+          $ref: '#/definitions/model.BookingDetail'
+        type: array
+      id:
+        type: integer
+      total_amount:
+        type: number
+      updated_at:
+        type: string
+    type: object
+  model.BookingDetail:
+    properties:
+      booking_id:
+        type: integer
+      created_at:
+        type: string
+      id:
+        type: integer
+      quantity:
+        type: integer
+      subtotal:
+        type: number
+      ticket_category:
+        $ref: '#/definitions/model.TicketCategory'
+      ticket_category_id:
+        type: integer
+      updated_at:
+        type: string
+    type: object
+  model.Customer:
+    properties:
+      created_at:
+        type: string
+      email:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      nik:
+        description: nik tidak boleh lebih dari 16 karakter dan kurang dari 16 karakter
+        type: string
+      updated_at:
+        type: string
+      user:
+        $ref: '#/definitions/model.User'
+      user_id:
+        type: integer
+    type: object
+  model.TicketCategory:
+    properties:
+      available_quota:
+        minimum: 0
+        type: integer
+      created_at:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      price:
+        type: number
+      total_quota:
+        minimum: 0
+        type: integer
+      updated_at:
+        type: string
+    required:
+    - available_quota
+    - name
+    - price
+    - total_quota
+    type: object
+  model.User:
+    properties:
+      created_at:
+        type: string
+      email:
+        type: string
+      id:
+        type: integer
+      is_verified:
+        type: boolean
+      name:
+        type: string
+      role:
+        type: string
+      updated_at:
+        type: string
+    type: object
+host: localhost:18080
+info:
+  contact:
+    email: support@goticket.com
+    name: GoTicket Support Team
+    url: http://www.goticket.com/support
+  description: REST API server for GoTicket ticketing system.
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: GoTicket API Documentation
+  version: "1.0"
+paths:
+  /auth/forgot-password:
+    post:
+      consumes:
+      - application/json
+      description: Send a 6-digit OTP code to user email for password reset
+      parameters:
+      - description: Forgot Password Request Payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.ForgotPasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.WebResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.WebResponse'
+      summary: Forgot Password Request
+      tags:
+      - Auth
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticate user and return JWT access token
+      parameters:
+      - description: Login Request Payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.WebResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.LoginResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.WebResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.WebResponse'
+      summary: User Login
+      tags:
+      - Auth
+  /auth/logout:
+    post:
+      description: Blacklist current JWT token to logout user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.WebResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.WebResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.WebResponse'
+      security:
+      - BearerAuth: []
+      summary: User Logout
+      tags:
+      - Auth
+  /auth/me:
+    get:
+      description: Retrieve details of current authenticated user from JWT token
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.WebResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/model.User'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.WebResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/dto.WebResponse'
+      security:
+      - BearerAuth: []
+      summary: Get Current User Profile
+      tags:
+      - Auth
+  /auth/register:
+    post:
+      consumes:
+      - application/json
+      description: Register a new user with username, email, password, and role
+      parameters:
+      - description: Register Request Payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.RegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.WebResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/model.User'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.WebResponse'
+      summary: User Registration
+      tags:
+      - Auth
+  /auth/resend-otp:
+    post:
+      consumes:
+      - application/json
+      description: Request a new OTP code sent to email for account registration or
+        password reset
+      parameters:
+      - description: Resend OTP Request Payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.ResendOTPRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.WebResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.WebResponse'
+      summary: Resend OTP Code
+      tags:
+      - Auth
+  /auth/reset-password:
+    post:
+      consumes:
+      - application/json
+      description: Reset user password by providing valid email, OTP code, and new
+        password
+      parameters:
+      - description: Reset Password Request Payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.ResetPasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.WebResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.WebResponse'
+      summary: Reset Password
+      tags:
+      - Auth
+  /auth/verify-otp:
+    post:
+      consumes:
+      - application/json
+      description: Verify 6-digit OTP code sent to user email for registration activation
+        or forgot password
+      parameters:
+      - description: Verify OTP Request Payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.VerifyOTPRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.WebResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.WebResponse'
+      summary: Verify OTP Code
+      tags:
+      - Auth
+  /bookings:
+    post:
+      consumes:
+      - application/json
+      description: Book concert tickets for a customer and category with race condition
+        safety
+      parameters:
+      - description: Booking Request Payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.BookingRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.WebResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/model.Booking'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.WebResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/dto.WebResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/dto.WebResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.WebResponse'
+      security:
+      - BearerAuth: []
+      summary: Create Ticket Booking
+      tags:
+      - Bookings
+  /bookings/{id}:
+    get:
+      description: Get detailed booking information by ID with security audit check
+      parameters:
+      - description: Booking ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.WebResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/model.Booking'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.WebResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.WebResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/dto.WebResponse'
+      security:
+      - BearerAuth: []
+      summary: Get Booking by ID
+      tags:
+      - Bookings
+  /bookings/report/pdf:
+    get:
+      description: Export booking transactions report in PDF format filtered by start_date
+        and end_date
+      parameters:
+      - description: Start Date (YYYY-MM-DD)
+        in: query
+        name: start_date
+        required: true
+        type: string
+      - description: End Date (YYYY-MM-DD)
+        in: query
+        name: end_date
+        required: true
+        type: string
+      produces:
+      - application/pdf
+      responses:
+        "200":
+          description: PDF File Attachment
+          schema:
+            type: file
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.WebResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.WebResponse'
+      security:
+      - BearerAuth: []
+      summary: Export Booking PDF Report (Admin Only)
+      tags:
+      - Bookings
+  /concerts:
+    get:
+      description: Retrieve a paginated list of concerts with optional search and
+        sorting
+      parameters:
+      - description: Page number (default 1)
+        in: query
+        name: page
+        type: integer
+      - description: Page limit (default 10)
+        in: query
+        name: limit
+        type: integer
+      - description: Search keyword for title, venue, or description
+        in: query
+        name: search
+        type: string
+      - description: Sorting order (title_asc, title_desc, date_asc, date_desc)
+        in: query
+        name: sort
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.WebResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/dto.ConcertResponse'
+                  type: array
+                meta:
+                  $ref: '#/definitions/dto.PaginationMeta'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.WebResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.WebResponse'
+      summary: List concerts
+      tags:
+      - Concerts
+    post:
+      consumes:
+      - multipart/form-data
+      description: Create concert data along with file uploads for poster, thumbnail,
+        and rules PDF
+      parameters:
+      - description: Title of concert
+        in: formData
+        name: title
+        required: true
+        type: string
+      - description: Venue of concert
+        in: formData
+        name: venue
+        required: true
+        type: string
+      - description: Date of concert (RFC3339 or YYYY-MM-DD HH:mm)
+        in: formData
+        name: date
+        required: true
+        type: string
+      - description: Description of concert
+        in: formData
+        name: description
+        type: string
+      - description: Status of concert
+        in: formData
+        name: status
+        type: string
+      - description: Poster Image file
+        in: formData
+        name: poster
+        type: file
+      - description: Thumbnail Image file
+        in: formData
+        name: thumbnail
+        type: file
+      - description: Concert Rules PDF file
+        in: formData
+        name: rules_pdf
+        type: file
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.WebResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.ConcertResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.WebResponse'
+      security:
+      - BearerAuth: []
+      summary: Create a new concert
+      tags:
+      - Concerts
+  /concerts/{id}:
+    delete:
+      description: Delete a concert record from database
+      parameters:
+      - description: Concert ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.WebResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.WebResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.WebResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete concert by ID
+      tags:
+      - Concerts
+    get:
+      description: Retrieve single concert details by ID
+      parameters:
+      - description: Concert ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.WebResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.ConcertResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.WebResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/dto.WebResponse'
+      summary: Get concert by ID
+      tags:
+      - Concerts
+    put:
+      consumes:
+      - multipart/form-data
+      description: Update existing concert data and optionally upload new poster,
+        thumbnail, or rules PDF
+      parameters:
+      - description: Concert ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Title of concert
+        in: formData
+        name: title
+        type: string
+      - description: Venue of concert
+        in: formData
+        name: venue
+        type: string
+      - description: Date of concert
+        in: formData
+        name: date
+        type: string
+      - description: Description of concert
+        in: formData
+        name: description
+        type: string
+      - description: Status of concert
+        in: formData
+        name: status
+        type: string
+      - description: Poster Image file
+        in: formData
+        name: poster
+        type: file
+      - description: Thumbnail Image file
+        in: formData
+        name: thumbnail
+        type: file
+      - description: Concert Rules PDF file
+        in: formData
+        name: rules_pdf
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.WebResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.ConcertResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.WebResponse'
+      security:
+      - BearerAuth: []
+      summary: Update concert by ID
+      tags:
+      - Concerts
+  /customers:
+    get:
+      description: Retrieve paginated customer records
+      parameters:
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Page limit
+        in: query
+        name: limit
+        type: integer
+      - description: Search keyword (name, email, nik)
+        in: query
+        name: search
+        type: string
+      - description: Sort order (name_asc, name_desc, email_asc, email_desc, nik_asc,
+          nik_desc)
+        in: query
+        name: sort
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.WebResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/dto.CustomerResponse'
+                  type: array
+                meta:
+                  $ref: '#/definitions/dto.PaginationMeta'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.WebResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.WebResponse'
+      security:
+      - BearerAuth: []
+      summary: List Customers (Admin Only)
+      tags:
+      - Customers
+    post:
+      consumes:
+      - application/json
+      description: Register a new customer record
+      parameters:
+      - description: Customer Create Payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CustomerCreateRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.WebResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.CustomerResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.WebResponse'
+      security:
+      - BearerAuth: []
+      summary: Create Customer
+      tags:
+      - Customers
+  /customers/{id}:
+    delete:
+      description: Delete customer by ID
+      parameters:
+      - description: Customer ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.WebResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.WebResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.WebResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete Customer by ID (Admin Only)
+      tags:
+      - Customers
+    get:
+      description: Retrieve a customer record by ID
+      parameters:
+      - description: Customer ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.WebResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.CustomerResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.WebResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/dto.WebResponse'
+      security:
+      - BearerAuth: []
+      summary: Get Customer by ID
+      tags:
+      - Customers
+    put:
+      consumes:
+      - application/json
+      description: Update customer details
+      parameters:
+      - description: Customer ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Customer Update Payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CustomerUpdateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.WebResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.CustomerResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.WebResponse'
+      security:
+      - BearerAuth: []
+      summary: Update Customer by ID
+      tags:
+      - Customers
+  /health:
+    get:
+      description: Health check endpoint to verify server and database connectivity
+        status
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "503":
+          description: Service Unavailable
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Check API Health
+      tags:
+      - Health
+  /ticket-categories:
+    get:
+      description: Get all available concert ticket categories and quotas
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.WebResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/model.TicketCategory'
+                  type: array
+              type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.WebResponse'
+      summary: List Ticket Categories
+      tags:
+      - Ticket Categories
+securityDefinitions:
+  BearerAuth:
+    description: Type 'Bearer ' followed by your JWT token.
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

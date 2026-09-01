@@ -1,0 +1,44 @@
+# Environment files
+.env
+.env.prod
+.env.local
+*.env
+!.env.example
+
+# Binaries and compiled outputs
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+bin/
+main
+goticket-api
+
+# Air live reload temporary folder
+/tmp
+tmp/
+.air/
+
+# Log files
+*.log
+logs/
+
+# Test coverage
+*.out
+coverage.html
+
+# Uploads directory (keep directory, ignore uploaded files)
+uploads/*
+!uploads/.gitkeep
+
+# IDE and Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+Thumbs.db
