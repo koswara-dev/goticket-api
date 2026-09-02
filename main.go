@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 
 	"gotiket-api/config"
 	_ "gotiket-api/docs"
@@ -10,6 +9,7 @@ import (
 	"gotiket-api/repository"
 	"gotiket-api/routes"
 	"gotiket-api/service"
+	"gotiket-api/utils"
 
 	"github.com/gin-gonic/gin"
 )
@@ -34,13 +34,16 @@ import (
 // @name Authorization
 // @description Type 'Bearer ' followed by your JWT token.
 func main() {
+	// Inisialisasi Structured Logger Terpusat (Rotasi 24 jam & Retensi 365 hari)
+	utils.InitLogger()
+
 	appConfig := config.LoadConfig()
 
 	if appConfig.IsProduction() {
 		gin.SetMode(gin.ReleaseMode)
-		log.Println("Sistem berjalan dalam Mode Produksi (Gin Release Mode)")
+		utils.Log.Info("Sistem berjalan dalam Mode Produksi (Gin Release Mode)")
 	} else {
-		log.Println("Sistem berjalan dalam Mode Pengembangan (Gin Debug Mode)")
+		utils.Log.Info("Sistem berjalan dalam Mode Pengembangan (Gin Debug Mode)")
 	}
 
 	db := config.InitDB()
@@ -89,9 +92,9 @@ func main() {
 		BlacklistedTokenRepo:  blacklistedTokenRepo,
 	})
 
-	log.Printf("Server sudah berjalan on port %d...", appConfig.AppPort)
+	utils.Log.Infof("Server sudah berjalan on port %d...", appConfig.AppPort)
 	if err := r.Run(fmt.Sprintf(":%d", appConfig.AppPort)); err != nil {
-		log.Fatalf("Gagal menjalankan server: %v", err)
+		utils.Log.Fatalf("Gagal menjalankan server: %v", err)
 	}
 }
 

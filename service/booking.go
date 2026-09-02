@@ -5,6 +5,8 @@ import (
 	"gotiket-api/dto"
 	"gotiket-api/model"
 	"gotiket-api/repository"
+	"gotiket-api/utils"
+	"math/rand"
 	"time"
 
 	"gorm.io/gorm"
@@ -49,7 +51,7 @@ func (s *bookingService) CreateBooking(req *dto.BookingRequest) (model.Booking, 
 
 		var totalAmount float64
 		var details []model.BookingDetail
-		bookingCode := fmt.Sprintf("TIX-%d-%d", time.Now().Unix(), time.Now().UnixNano()%1000)
+		bookingCode := fmt.Sprintf("TIX-%d-%04d", time.Now().Unix(), rand.Intn(10000))
 
 		// 2. Buat reservasi utama
 		finalBooking = model.Booking{
@@ -74,6 +76,14 @@ func (s *bookingService) CreateBooking(req *dto.BookingRequest) (model.Booking, 
 
 			// Validasi Quota
 			if category.AvailableQuota < item.Quantity {
+				if utils.Log != nil {
+					utils.Log.WithFields(map[string]interface{}{
+						"category_id": category.ID,
+						"category":    category.Name,
+						"available":   category.AvailableQuota,
+						"requested":   item.Quantity,
+					}).Warn("Pemesanan gagal: Kuota tiket tidak mencukupi (Race condition protection)")
+				}
 				return fmt.Errorf("%w: '%s' tersisa %d, diminta %d",
 					model.ErrInsufficientQuota, category.Name, category.AvailableQuota, item.Quantity)
 			}
@@ -106,6 +116,15 @@ func (s *bookingService) CreateBooking(req *dto.BookingRequest) (model.Booking, 
 		finalBooking.Details = details
 		if err := txBookingRepo.Update(&finalBooking); err != nil {
 			return err
+		}
+
+		if utils.Log != nil {
+			utils.Log.WithFields(map[string]interface{}{
+				"booking_id":   finalBooking.ID,
+				"booking_code": finalBooking.BookingCode,
+				"customer_id":  customer.ID,
+				"total_amount": totalAmount,
+			}).Info("Transaksi pemesanan tiket berhasil diproses")
 		}
 
 		return nil // Commit otomatis jika tanpa error

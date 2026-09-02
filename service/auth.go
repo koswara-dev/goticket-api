@@ -42,6 +42,15 @@ func NewAuthService(userRepo repository.UserRepository, blacklistedTokenRepo rep
 	}
 }
 
+func (s *AuthServiceImpl) getSMTPConfig() utils.SMTPConfig {
+	return utils.SMTPConfig{
+		SMTPHost:     s.cfg.SMTPHost,
+		SMTPPort:     s.cfg.SMTPPort,
+		SenderEmail:  s.cfg.SenderEmail,
+		AuthPassword: s.cfg.AuthPassword,
+	}
+}
+
 func generateRandomOTP() string {
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	return fmt.Sprintf("%06d", r.Intn(1000000))
@@ -69,6 +78,7 @@ func (s *AuthServiceImpl) Register(req dto.RegisterRequest) (*model.User, error)
 	}
 
 	if err := s.userRepo.Create(&user); err != nil {
+		utils.Log.WithFields(map[string]interface{}{"email": req.Email, "error": err}).Error("Gagal membuat data user baru")
 		return nil, err
 	}
 
@@ -85,14 +95,16 @@ func (s *AuthServiceImpl) Register(req dto.RegisterRequest) (*model.User, error)
 	_ = s.otpRepo.Create(&otp)
 
 	// Kirim Email OTP
-	_ = utils.SendOTPEmail(user.Email, otpCode, "register", s.cfg)
+	_ = utils.SendOTPEmail(user.Email, otpCode, "register", s.getSMTPConfig())
 
+	utils.Log.WithFields(map[string]interface{}{"user_id": user.ID, "email": user.Email}).Info("Registrasi user baru berhasil, OTP terkirim")
 	return &user, nil
 }
 
 func (s *AuthServiceImpl) VerifyOTP(req dto.VerifyOTPRequest) error {
 	otp, err := s.otpRepo.FindValidOTP(req.Email, req.Code, req.Type)
 	if err != nil {
+		utils.Log.WithFields(map[string]interface{}{"email": req.Email, "type": req.Type}).Warn("Verifikasi OTP gagal: kode invalid / expired")
 		return errors.New("kode OTP tidak valid atau sudah kadaluwarsa")
 	}
 
@@ -105,6 +117,7 @@ func (s *AuthServiceImpl) VerifyOTP(req dto.VerifyOTPRequest) error {
 		if err := s.userRepo.Update(&user); err != nil {
 			return errors.New("gagal memperbarui status verifikasi akun")
 		}
+		utils.Log.WithFields(map[string]interface{}{"email": req.Email}).Info("Akun berhasil diverifikasi melalui OTP")
 	}
 
 	return s.otpRepo.MarkAsUsed(otp.ID)
@@ -133,7 +146,7 @@ func (s *AuthServiceImpl) ResendOTP(req dto.ResendOTPRequest) error {
 		return errors.New("gagal membuat kode OTP baru")
 	}
 
-	return utils.SendOTPEmail(req.Email, otpCode, req.Type, s.cfg)
+	return utils.SendOTPEmail(req.Email, otpCode, req.Type, s.getSMTPConfig())
 }
 
 func (s *AuthServiceImpl) ForgotPassword(req dto.ForgotPasswordRequest) error {
@@ -155,7 +168,7 @@ func (s *AuthServiceImpl) ForgotPassword(req dto.ForgotPasswordRequest) error {
 		return errors.New("gagal membuat OTP reset password")
 	}
 
-	return utils.SendOTPEmail(req.Email, otpCode, "forgot_password", s.cfg)
+	return utils.SendOTPEmail(req.Email, otpCode, "forgot_password", s.getSMTPConfig())
 }
 
 func (s *AuthServiceImpl) ResetPassword(req dto.ResetPasswordRequest) error {

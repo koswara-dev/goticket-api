@@ -23,6 +23,9 @@ type RouterConfig struct {
 }
 
 func SetupRoutes(r *gin.Engine, cfg RouterConfig) {
+	// Register Terpusat Structured JSON Logger Middleware
+	r.Use(middleware.GinLogger())
+
 	// Health Check Route
 	r.GET("/health", cfg.HealthHandler.HealthCheck)
 

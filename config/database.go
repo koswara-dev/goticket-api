@@ -1,18 +1,73 @@
 package config
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"os"
 	"time"
 
 	"gotiket-api/model"
+	"gotiket-api/utils"
 
+	"github.com/sirupsen/logrus"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 )
+
+type GormLogrusLogger struct {
+	SlowThreshold time.Duration
+}
+
+func (l *GormLogrusLogger) LogMode(level logger.LogLevel) logger.Interface {
+	return l
+}
+
+func (l *GormLogrusLogger) Info(ctx context.Context, msg string, data ...interface{}) {
+	if utils.Log != nil {
+		utils.Log.Infof(msg, data...)
+	}
+}
+
+func (l *GormLogrusLogger) Warn(ctx context.Context, msg string, data ...interface{}) {
+	if utils.Log != nil {
+		utils.Log.Warnf(msg, data...)
+	}
+}
+
+func (l *GormLogrusLogger) Error(ctx context.Context, msg string, data ...interface{}) {
+	if utils.Log != nil {
+		utils.Log.Errorf(msg, data...)
+	}
+}
+
+func (l *GormLogrusLogger) Trace(ctx context.Context, begin time.Time, fc func() (string, int64), err error) {
+	elapsed := time.Since(begin)
+	sql, rows := fc()
+	fields := logrus.Fields{
+		"elapsed_ms": float64(elapsed.Nanoseconds()) / 1e6,
+		"rows":       rows,
+		"sql":        sql,
+	}
+
+	if err != nil && err != gorm.ErrRecordNotFound {
+		fields["error"] = err
+		if utils.Log != nil {
+			utils.Log.WithFields(fields).Error("GORM Database Query Error")
+		}
+	} else if l.SlowThreshold != 0 && elapsed > l.SlowThreshold {
+		fields["slow_query"] = true
+		if utils.Log != nil {
+			utils.Log.WithFields(fields).Warn("GORM Slow Query Detected")
+		}
+	} else {
+		if utils.Log != nil {
+			utils.Log.WithFields(fields).Debug("GORM Query Executed")
+		}
+	}
+}
 
 // InitDB menginisialisasi koneksi database PostgreSQL, AutoMigrate, dan seeding data awal
 func InitDB() *gorm.DB {
@@ -27,11 +82,19 @@ func InitDB() *gorm.DB {
 	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s TimeZone=%s sslmode=%s",
 		host, user, password, dbname, port, timezone, sslmode)
 
+	dbLogger := &GormLogrusLogger{
+		SlowThreshold: 200 * time.Millisecond,
+	}
+
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
-		Logger: logger.Default.LogMode(logger.Info),
+		Logger: dbLogger,
 	})
 	if err != nil {
-		log.Fatalf("Gagal terhubung ke database PostgreSQL: %v", err)
+		if utils.Log != nil {
+			utils.Log.Fatalf("Gagal terhubung ke database PostgreSQL: %v", err)
+		} else {
+			log.Fatalf("Gagal terhubung ke database PostgreSQL: %v", err)
+		}
 	}
 
 	// Auto Migration untuk semua tabel

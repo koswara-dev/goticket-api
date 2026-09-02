@@ -2,15 +2,18 @@ package utils
 
 import (
 	"errors"
+	"os"
 	"time"
-
-	"gotiket-api/config"
 
 	"github.com/golang-jwt/jwt/v5"
 )
 
 func getJWTSecret() []byte {
-	return []byte(config.GetEnv("JWT_SECRET", "super_secret_jwt_key"))
+	secret := os.Getenv("JWT_SECRET")
+	if secret == "" {
+		secret = "supersecretjwtkey123"
+	}
+	return []byte(secret)
 }
 
 func GenerateToken(userID uint, email string, role string) (string, error) {
