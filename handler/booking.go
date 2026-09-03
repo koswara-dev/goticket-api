@@ -14,11 +14,15 @@ import (
 )
 
 type BookingHandler struct {
-	bookingService service.BookingService
+	bookingService  service.BookingService
+	auditLogService service.AuditLogService
 }
 
-func NewBookingHandler(bookingService service.BookingService) *BookingHandler {
-	return &BookingHandler{bookingService: bookingService}
+func NewBookingHandler(bookingService service.BookingService, auditLogService service.AuditLogService) *BookingHandler {
+	return &BookingHandler{
+		bookingService:  bookingService,
+		auditLogService: auditLogService,
+	}
 }
 
 // CreateBooking handles creating a new concert ticket booking.
@@ -48,6 +52,9 @@ func (h *BookingHandler) CreateBooking(c *gin.Context) {
 
 	booking, err := h.bookingService.CreateBooking(&req)
 	if err != nil {
+		if h.auditLogService != nil {
+			h.auditLogService.Record(c, nil, "", "", "CREATE_BOOKING", "FAILED", err.Error())
+		}
 		if errors.Is(err, model.ErrInsufficientQuota) {
 			c.JSON(http.StatusConflict, gin.H{
 				"success": false,
@@ -70,6 +77,10 @@ func (h *BookingHandler) CreateBooking(c *gin.Context) {
 			"error":   err.Error(),
 		})
 		return
+	}
+
+	if h.auditLogService != nil {
+		h.auditLogService.Record(c, nil, "", "", "CREATE_BOOKING", "SUCCESS", fmt.Sprintf("Pemesanan tiket berhasil ID: %d, Kode: %s", booking.ID, booking.BookingCode))
 	}
 
 	c.JSON(http.StatusCreated, gin.H{

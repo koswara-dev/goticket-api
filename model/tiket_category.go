@@ -4,6 +4,8 @@ import "time"
 
 type TicketCategory struct {
 	ID             int       `gorm:"primaryKey;autoIncrement" json:"id"`
+	ConcertID      uint      `gorm:"not null" json:"concert_id"`
+	Concert        Concert   `gorm:"foreignKey:ConcertID" json:"concert,omitempty"`
 	Name           string    `gorm:"type:varchar(50);not null" json:"name" binding:"required"`
 	Price          float64   `gorm:"type:numeric(12,2);not null" json:"price" binding:"required,gt=0"`
 	TotalQuota     int       `gorm:"not null" json:"total_quota" binding:"required,gte=0"`

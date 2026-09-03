@@ -56,6 +56,7 @@ func (s *bookingService) CreateBooking(req *dto.BookingRequest) (model.Booking, 
 		// 2. Buat reservasi utama
 		finalBooking = model.Booking{
 			CustomerID:  customer.ID,
+			ConcertID:   req.ConcertID,
 			BookingCode: bookingCode,
 			TotalAmount: 0,
 			BookingDate: time.Now(),

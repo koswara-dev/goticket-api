@@ -20,7 +20,7 @@ func setupTestRouter() *gin.Engine {
 
 func TestConcertHandler_FindByID_Success(t *testing.T) {
 	mockService := new(MockConcertService)
-	handler := NewConcertHandler(mockService)
+	handler := NewConcertHandler(mockService, nil)
 
 	router := setupTestRouter()
 	router.GET("/concerts/:id", handler.FindByID)
@@ -49,7 +49,7 @@ func TestConcertHandler_FindByID_Success(t *testing.T) {
 
 func TestConcertHandler_FindByID_InvalidID(t *testing.T) {
 	mockService := new(MockConcertService)
-	handler := NewConcertHandler(mockService)
+	handler := NewConcertHandler(mockService, nil)
 
 	router := setupTestRouter()
 	router.GET("/concerts/:id", handler.FindByID)
@@ -69,7 +69,7 @@ func TestConcertHandler_FindByID_InvalidID(t *testing.T) {
 
 func TestConcertHandler_FindByID_NotFound(t *testing.T) {
 	mockService := new(MockConcertService)
-	handler := NewConcertHandler(mockService)
+	handler := NewConcertHandler(mockService, nil)
 
 	router := setupTestRouter()
 	router.GET("/concerts/:id", handler.FindByID)
@@ -92,7 +92,7 @@ func TestConcertHandler_FindByID_NotFound(t *testing.T) {
 
 func TestConcertHandler_FindAll_Success(t *testing.T) {
 	mockService := new(MockConcertService)
-	handler := NewConcertHandler(mockService)
+	handler := NewConcertHandler(mockService, nil)
 
 	router := setupTestRouter()
 	router.GET("/concerts", handler.FindAll)
@@ -132,7 +132,7 @@ func TestConcertHandler_FindAll_Success(t *testing.T) {
 
 func TestConcertHandler_Delete_Success(t *testing.T) {
 	mockService := new(MockConcertService)
-	handler := NewConcertHandler(mockService)
+	handler := NewConcertHandler(mockService, nil)
 
 	router := setupTestRouter()
 	router.DELETE("/concerts/:id", handler.Delete)

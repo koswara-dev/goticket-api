@@ -19,6 +19,7 @@ type RouterConfig struct {
 	BookingHandler        *handler.BookingHandler
 	AuthHandler           *handler.AuthHandler
 	ConcertHandler        *handler.ConcertHandler
+	AuditLogHandler       *handler.AuditLogHandler
 	BlacklistedTokenRepo  repository.BlacklistedTokenRepository
 }
 
@@ -87,6 +88,7 @@ func SetupRoutes(r *gin.Engine, cfg RouterConfig) {
 			adminOnly.PUT("/concerts/:id", cfg.ConcertHandler.Update)
 			adminOnly.DELETE("/concerts/:id", cfg.ConcertHandler.Delete)
 			adminOnly.GET("/bookings/report/pdf", cfg.BookingHandler.ExportBookingReportPDF)
+			adminOnly.GET("/audit-logs", cfg.AuditLogHandler.GetAuditLogs)
 		}
 	}
 }

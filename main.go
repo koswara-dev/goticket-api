@@ -59,8 +59,10 @@ func main() {
 	userRepo := repository.NewUserRepository(db)
 	blacklistedTokenRepo := repository.NewBlacklistedTokenRepository(db)
 	otpRepo := repository.NewOTPRepository(db)
+	auditLogRepo := repository.NewAuditLogRepository(db)
 
-	// Initialize Service
+	// Initialize Services
+	auditLogService := service.NewAuditLogService(auditLogRepo)
 	customerService := service.NewCustomerService(customerRepo)
 	concertService := service.NewConcertService(concertRepo, storageProvider)
 	bookingService := service.NewBookingService(db, bookingRepo, customerRepo)
@@ -69,10 +71,11 @@ func main() {
 	// Initialize Handlers
 	healthHandler := handler.NewHealthHandler(db)
 	customerHandler := handler.NewCustomerHandler(customerService)
-	concertHandler := handler.NewConcertHandler(concertService)
+	concertHandler := handler.NewConcertHandler(concertService, auditLogService)
 	ticketCategoryHandler := handler.NewTicketCategoryHandler(ticketCategoryRepo)
-	bookingHandler := handler.NewBookingHandler(bookingService)
-	authHandler := handler.NewAuthHandler(authService)
+	bookingHandler := handler.NewBookingHandler(bookingService, auditLogService)
+	authHandler := handler.NewAuthHandler(authService, auditLogService)
+	auditLogHandler := handler.NewAuditLogHandler(auditLogService)
 
 	// Setup Gin Framework Router
 	r := gin.Default()
@@ -89,6 +92,7 @@ func main() {
 		TicketCategoryHandler: ticketCategoryHandler,
 		BookingHandler:        bookingHandler,
 		AuthHandler:           authHandler,
+		AuditLogHandler:       auditLogHandler,
 		BlacklistedTokenRepo:  blacklistedTokenRepo,
 	})
 

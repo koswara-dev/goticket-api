@@ -11,11 +11,15 @@ import (
 )
 
 type ConcertHandler struct {
-	concertService service.ConcertService
+	concertService  service.ConcertService
+	auditLogService service.AuditLogService
 }
 
-func NewConcertHandler(concertService service.ConcertService) *ConcertHandler {
-	return &ConcertHandler{concertService: concertService}
+func NewConcertHandler(concertService service.ConcertService, auditLogService service.AuditLogService) *ConcertHandler {
+	return &ConcertHandler{
+		concertService:  concertService,
+		auditLogService: auditLogService,
+	}
 }
 
 // Create handles creating a new concert with optional media files.
@@ -53,12 +57,19 @@ func (h *ConcertHandler) Create(c *gin.Context) {
 
 	createdConcert, err := h.concertService.Create(req, posterFile, thumbnailFile, rulesFile, c)
 	if err != nil {
+		if h.auditLogService != nil {
+			h.auditLogService.Record(c, nil, "", "", "CREATE_CONCERT", "FAILED", err.Error())
+		}
 		c.JSON(http.StatusBadRequest, dto.WebResponse{
 			Success: false,
 			Message: "Gagal membuat concert",
 			Data:    err.Error(),
 		})
 		return
+	}
+
+	if h.auditLogService != nil {
+		h.auditLogService.Record(c, nil, "", "", "CREATE_CONCERT", "SUCCESS", "Konser berhasil dibuat: "+createdConcert.Title)
 	}
 
 	c.JSON(http.StatusCreated, dto.WebResponse{

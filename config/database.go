@@ -97,6 +97,24 @@ func InitDB() *gorm.DB {
 		}
 	}
 
+	// Auto Migration pendahuluan untuk Concert
+	_ = db.AutoMigrate(&model.Concert{})
+	var defaultConcert model.Concert
+	if err := db.First(&defaultConcert).Error; err != nil {
+		defaultConcert = model.Concert{
+			Title:       "Coldplay Music of the Spheres Tour 2026",
+			Description: "Konser tur dunia terbesar Coldplay di Jakarta",
+			Date:        time.Now().AddDate(0, 2, 0),
+			Venue:       "Gelora Bung Karno Stadium",
+			Status:      "active",
+		}
+		_ = db.Create(&defaultConcert).Error
+	}
+	_ = db.Exec("ALTER TABLE ticket_categories ADD COLUMN IF NOT EXISTS concert_id bigint").Error
+	_ = db.Exec(fmt.Sprintf("UPDATE ticket_categories SET concert_id = %d WHERE concert_id IS NULL OR concert_id = 0", defaultConcert.ID)).Error
+	_ = db.Exec("ALTER TABLE bookings ADD COLUMN IF NOT EXISTS concert_id bigint").Error
+	_ = db.Exec(fmt.Sprintf("UPDATE bookings SET concert_id = %d WHERE concert_id IS NULL OR concert_id = 0", defaultConcert.ID)).Error
+
 	// Auto Migration untuk semua tabel
 	err = db.AutoMigrate(
 		&model.User{},
@@ -107,6 +125,7 @@ func InitDB() *gorm.DB {
 		&model.BlacklistedToken{},
 		&model.Concert{},
 		&model.OTP{},
+		&model.AuditLog{},
 	)
 	if err != nil {
 		log.Fatalf("Gagal melakukan AutoMigrate: %v", err)
@@ -178,23 +197,38 @@ func seedInitialData(db *gorm.DB) {
 	}
 	log.Println("Seeding Customers dipastikan (10 customers terelasi user)!")
 
-	// 3. Seed Ticket Category (4 Categories)
+	// 3. Seed Concert (Ensure at least 1 Concert exists)
+	var defaultConcert model.Concert
+	if err := db.First(&defaultConcert).Error; err != nil {
+		defaultConcert = model.Concert{
+			Title:       "Coldplay Music of the Spheres Tour 2026",
+			Description: "Konser tur dunia terbesar Coldplay di Jakarta",
+			Date:        time.Now().AddDate(0, 2, 0),
+			Venue:       "Gelora Bung Karno Stadium",
+			Status:      "active",
+		}
+		db.Create(&defaultConcert)
+	}
+
+	// 4. Seed Ticket Category (4 Categories linked to Concert)
 	targetCategories := []model.TicketCategory{
-		{Name: "VVIP (Front Row)", Price: 2500000, TotalQuota: 10, AvailableQuota: 10},
-		{Name: "VIP", Price: 1500000, TotalQuota: 50, AvailableQuota: 50},
-		{Name: "CAT 1", Price: 1000000, TotalQuota: 100, AvailableQuota: 100},
-		{Name: "CAT 2", Price: 750000, TotalQuota: 200, AvailableQuota: 200},
+		{ConcertID: uint(defaultConcert.ID), Name: "VVIP (Front Row)", Price: 2500000, TotalQuota: 10, AvailableQuota: 10},
+		{ConcertID: uint(defaultConcert.ID), Name: "VIP", Price: 1500000, TotalQuota: 50, AvailableQuota: 50},
+		{ConcertID: uint(defaultConcert.ID), Name: "CAT 1", Price: 1000000, TotalQuota: 100, AvailableQuota: 100},
+		{ConcertID: uint(defaultConcert.ID), Name: "CAT 2", Price: 750000, TotalQuota: 200, AvailableQuota: 200},
 	}
 
 	for _, cat := range targetCategories {
 		var existingCat model.TicketCategory
 		if err := db.Where("name = ?", cat.Name).First(&existingCat).Error; err != nil {
 			db.Create(&cat)
+		} else if existingCat.ConcertID == 0 {
+			db.Model(&existingCat).Update("concert_id", defaultConcert.ID)
 		}
 	}
 	log.Println("Seeding Ticket Categories dipastikan (4 kategori)!")
 
-	// 4. Seed Bookings & Booking Details (Ensure 10 Bookings)
+	// 5. Seed Bookings & Booking Details (Ensure 10 Bookings)
 	var bookingCount int64
 	db.Model(&model.Booking{}).Count(&bookingCount)
 	if bookingCount < 10 {
@@ -218,6 +252,7 @@ func seedInitialData(db *gorm.DB) {
 				if err := db.Where("booking_code = ?", bookingCode).First(&existingBooking).Error; err != nil {
 					booking := model.Booking{
 						CustomerID:  cust.ID,
+						ConcertID:   uint(defaultConcert.ID),
 						BookingCode: bookingCode,
 						TotalAmount: subtotal,
 						BookingDate: time.Now(),

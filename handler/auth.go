@@ -11,11 +11,15 @@ import (
 )
 
 type AuthHandler struct {
-	authService service.AuthService
+	authService     service.AuthService
+	auditLogService service.AuditLogService
 }
 
-func NewAuthHandler(authService service.AuthService) *AuthHandler {
-	return &AuthHandler{authService: authService}
+func NewAuthHandler(authService service.AuthService, auditLogService service.AuditLogService) *AuthHandler {
+	return &AuthHandler{
+		authService:     authService,
+		auditLogService: auditLogService,
+	}
 }
 
 // Register handles user registration.
@@ -41,12 +45,19 @@ func (h *AuthHandler) Register(c *gin.Context) {
 
 	user, err := h.authService.Register(req)
 	if err != nil {
+		if h.auditLogService != nil {
+			h.auditLogService.Record(c, nil, req.Email, "user", "REGISTER", "FAILED", err.Error())
+		}
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
 			"message": "Gagal melakukan registrasi",
 			"error":   err.Error(),
 		})
 		return
+	}
+
+	if h.auditLogService != nil {
+		h.auditLogService.Record(c, &user.ID, user.Email, user.Role, "REGISTER", "SUCCESS", "Pendaftaran akun baru berhasil")
 	}
 
 	c.JSON(http.StatusCreated, gin.H{
@@ -80,12 +91,19 @@ func (h *AuthHandler) Login(c *gin.Context) {
 
 	res, err := h.authService.Login(req)
 	if err != nil {
+		if h.auditLogService != nil {
+			h.auditLogService.Record(c, nil, req.Email, "", "LOGIN", "FAILED", err.Error())
+		}
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"success": false,
 			"message": "Login gagal",
 			"error":   err.Error(),
 		})
 		return
+	}
+
+	if h.auditLogService != nil {
+		h.auditLogService.Record(c, nil, res.Email, "", "LOGIN", "SUCCESS", "User login berhasil")
 	}
 
 	c.JSON(http.StatusOK, gin.H{
@@ -127,12 +145,19 @@ func (h *AuthHandler) Logout(c *gin.Context) {
 	tokenString := parts[1]
 
 	if err := h.authService.Logout(tokenString); err != nil {
+		if h.auditLogService != nil {
+			h.auditLogService.Record(c, nil, "", "", "LOGOUT", "FAILED", err.Error())
+		}
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"success": false,
 			"message": "Gagal melakukan logout",
 			"error":   err.Error(),
 		})
 		return
+	}
+
+	if h.auditLogService != nil {
+		h.auditLogService.Record(c, nil, "", "", "LOGOUT", "SUCCESS", "User logout berhasil")
 	}
 
 	c.JSON(http.StatusOK, gin.H{

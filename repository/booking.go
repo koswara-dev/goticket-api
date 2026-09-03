@@ -35,20 +35,21 @@ func (r *BookingRepositoryImpl) CreateDetail(detail *model.BookingDetail) error 
 
 func (r *BookingRepositoryImpl) FindByID(id uint) (model.Booking, error) {
 	var booking model.Booking
-	err := r.db.Preload("Customer").Preload("Details.TicketCategory").First(&booking, id).Error
+	err := r.db.Preload("Customer").Preload("Concert").Preload("Details.TicketCategory.Concert").First(&booking, id).Error
 	return booking, err
 }
 
 func (r *BookingRepositoryImpl) FindAll() ([]model.Booking, error) {
 	var bookings []model.Booking
-	err := r.db.Preload("Customer").Preload("Details.TicketCategory").Find(&bookings).Error
+	err := r.db.Preload("Customer").Preload("Concert").Preload("Details.TicketCategory.Concert").Find(&bookings).Error
 	return bookings, err
 }
 
 func (r *BookingRepositoryImpl) FindByDateRange(startDate, endDate time.Time) ([]model.Booking, error) {
 	var bookings []model.Booking
 	err := r.db.Preload("Customer").
-		Preload("Details.TicketCategory").
+		Preload("Concert").
+		Preload("Details.TicketCategory.Concert").
 		Where("booking_date >= ? AND booking_date <= ?", startDate, endDate).
 		Order("booking_date DESC").
 		Find(&bookings).Error
